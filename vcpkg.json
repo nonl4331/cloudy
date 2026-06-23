@@ -1,0 +1,9 @@
+{
+  "dependencies": [
+    "embree",
+    "fmt",
+    "spdlog",
+    "stb",
+    "tinygltf"
+  ]
+}
