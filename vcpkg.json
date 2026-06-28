@@ -1,5 +1,6 @@
 {
   "dependencies": [
+    "cli11",
     "embree",
     "fmt",
     "spdlog",
