@@ -41,15 +41,18 @@ target_link_libraries(cloudy_lib PRIVATE embree)
 
 include(FetchContent)
 FetchContent_Declare(
-	openvdb
+	nanovdb
 	GIT_REPOSITORY https://github.com/AcademySoftwareFoundation/openvdb.git
 	GIT_TAG        v13.0.0
 	GIT_SHALLOW    TRUE
 	EXCLUDE_FROM_ALL
 	SOURCE_SUBDIR "nanovdb"
 )
-FetchContent_MakeAvailable(openvdb)
+FetchContent_MakeAvailable(nanovdb)
 target_include_directories(cloudy_lib PRIVATE ${openvdb_SOURCE_DIR}/nanovdb)
+
+find_package(OpenVDB CONFIG REQUIRED)
+target_link_libraries(cloudy_lib PRIVATE OpenVDB::openvdb)
 
 find_path(TINYGLTF_INCLUDE_DIRS "tiny_gltf.h")
 target_include_directories(cloudy_lib PRIVATE ${TINYGLTF_INCLUDE_DIRS})

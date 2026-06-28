@@ -5,6 +5,7 @@
     "fmt",
     "spdlog",
     "stb",
-    "tinygltf"
+    "tinygltf",
+    "openvdb"
   ]
 }
