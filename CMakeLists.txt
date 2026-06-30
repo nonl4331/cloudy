@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 4.0)
 project(cloudy VERSION 0.1.0 DESCRIPTION "Volumetric Path Tracer" LANGUAGES CXX)
 
 add_executable(cloudy src/main.cpp)
+target_sources(cloudy PUBLIC src/img.cpp)
 target_compile_features(cloudy PUBLIC cxx_std_20)
 target_link_options(
     cloudy
@@ -53,7 +54,7 @@ FetchContent_Declare(
 	SOURCE_SUBDIR "nanovdb"
 )
 FetchContent_MakeAvailable(nanovdb)
-target_include_directories(cloudy PRIVATE ${openvdb_SOURCE_DIR}/nanovdb)
+target_include_directories(cloudy PRIVATE ${nanovdb_SOURCE_DIR}/nanovdb)
 
 find_package(OpenVDB CONFIG REQUIRED)
 target_link_libraries(cloudy PRIVATE OpenVDB::openvdb)
@@ -63,6 +64,9 @@ target_include_directories(cloudy PRIVATE ${TINYGLTF_INCLUDE_DIRS})
 
 find_package(Stb MODULE REQUIRED)
 target_include_directories(cloudy SYSTEM PRIVATE ${Stb_INCLUDE_DIR})
+
+find_package(OpenEXR CONFIG REQUIRED)
+target_link_libraries(cloudy PRIVATE OpenEXR::OpenEXR)
 
 find_package(CLI11 CONFIG REQUIRED)
 target_link_libraries(cloudy PRIVATE CLI11::CLI11)

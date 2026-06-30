@@ -3,9 +3,10 @@
     "cli11",
     "embree",
     "fmt",
+    "openvdb",
     "spdlog",
     "stb",
     "tinygltf",
-    "openvdb"
+    "openexr"
   ]
 }
