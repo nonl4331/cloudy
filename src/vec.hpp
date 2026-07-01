@@ -4,6 +4,7 @@
 struct Vec3 {
   float x, y, z;
 
+  constexpr Vec3() : x(0.0f), y(0.0f), z(0.0f) {}
   constexpr Vec3(float x, float y, float z) : x(x), y(y), z(z) {}
 
   constexpr static auto splat(float v) -> Vec3 { return Vec3(v, v, v); }
@@ -31,6 +32,10 @@ struct Vec3 {
   auto operator-() const -> Vec3 { return Vec3(-x, -y, -z); }
 
   auto dot(const Vec3 &o) const -> float { return x * o.x + y * o.y + z * o.z; }
+
+  auto cross(const Vec3 &o) const -> Vec3 {
+    return Vec3(y * o.z - z * o.y, z * o.x - x * o.z, x * o.y - y * o.x);
+  }
 
   auto mag_sq() const -> float { return this->dot(*this); }
 

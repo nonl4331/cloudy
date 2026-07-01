@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 4.0)
 project(cloudy VERSION 0.1.0 DESCRIPTION "Volumetric Path Tracer" LANGUAGES CXX)
 
 add_executable(cloudy src/main.cpp)
-target_sources(cloudy PUBLIC src/img.cpp)
+target_sources(cloudy PUBLIC src/img.cpp src/coord.cpp src/cam.cpp)
 target_compile_features(cloudy PUBLIC cxx_std_20)
 target_link_options(
     cloudy
