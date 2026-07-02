@@ -3,10 +3,11 @@
     "cli11",
     "embree",
     "fmt",
+    "openexr",
     "openvdb",
     "spdlog",
     "stb",
     "tinygltf",
-    "openexr"
+    "nlohmann-json"
   ]
 }

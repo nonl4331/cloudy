@@ -1,8 +1,13 @@
+#include <ImathBox.h>
+#include <ImfForward.h>
 #include <algorithm>
+#include <cstdint>
 #include <math.h>
 
 #include "img.hpp"
+#include "sky.hpp"
 #include <spdlog/spdlog.h>
+#include <vector>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -13,6 +18,9 @@
 #include <ImfFrameBuffer.h>
 #include <ImfOutputFile.h>
 #include <ImfStandardAttributes.h>
+
+#include <ImfRgbaFile.h>
+#include <ImfArray.h>
 
 using namespace OPENEXR_IMF_NAMESPACE;
 
@@ -84,4 +92,28 @@ auto write_sdr_image(std::vector<Vec3> const &img, uint32_t width,
   } else {
     spdlog::info("wrote sdr image to {}.png", name);
   }
+}
+
+// don't bother with reading white point data or colour space for now (it probably doesn't exist anyway)
+auto load_hdri(std::string const &filename) -> Sky {
+	RgbaInputFile file(filename.data());
+	Imath::Box2i dw = file.dataWindow();
+
+	uint32_t width = dw.max.x - dw.min.x + 1;
+	uint32_t height = dw.max.y - dw.min.y + 1;
+
+	Array2D<Rgba> pixels(height, width);
+	file.setFrameBuffer(&pixels[0][0] - dw.min.x - dw.min.y * width, 1, width);
+	file.readPixels(dw.min.y, dw.max.y);
+
+	std::vector<Vec3> backing(static_cast<uint64_t>(width) * static_cast<uint32_t>(height));
+	for (uint64_t x = 0; x < width; x++) {
+		for (uint64_t y = 0; y < height; y++) {
+			Vec3 col = Vec3(pixels[y][x].r, pixels[y][x].g, pixels[y][x].b);
+			backing[x + y * static_cast<uint64_t>(width)] = col;
+		}
+	}
+	Sky sky(backing, width, height);
+
+	return sky;
 }

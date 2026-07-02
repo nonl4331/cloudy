@@ -3,6 +3,7 @@
 #include <cmath>
 #include <embree4/rtcore_common.h>
 #include <limits>
+#include <spdlog/spdlog.h>
 
 // see
 // https://math.stackexchange.com/questions/40164/how-do-you-rotate-a-vector-by-a-unit-quaternion
@@ -26,6 +27,7 @@ Camera::Camera(Vec3 origin, Quaternion rot, float hfov_rad, uint32_t width,
   this->up *= up_mag;
 
   this->lower_left = origin - right * 0.5f - this->up * 0.5f + forward;
+  this->right = right;
 }
 
 auto Camera::get_stratified_ray(uint64_t i) -> RTCRayHit {
@@ -37,6 +39,17 @@ auto Camera::get_stratified_ray(uint64_t i) -> RTCRayHit {
   rayhit.ray.tnear = 0.0f;
   rayhit.ray.tfar = std::numeric_limits<float>::infinity();
   rayhit.hit.geomID = RTC_INVALID_GEOMETRY_ID;
+
+  float u = (static_cast<float>(i % static_cast<uint64_t>(width)) + 0.5f) /
+            static_cast<float>(width);
+  float v = (static_cast<float>(i / static_cast<uint64_t>(width)) + 0.5f) /
+            static_cast<float>(height);
+
+  Vec3 dir = (lower_left + right * u + up * (1.0f - v) - origin).normalised();
+
+  rayhit.ray.dir_x = dir.x;
+  rayhit.ray.dir_y = dir.y;
+  rayhit.ray.dir_z = dir.z;
 
   return rayhit;
 }

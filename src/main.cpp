@@ -1,12 +1,20 @@
+#include <cmath>
 #include <cstdint>
+#include <embree4/rtcore_ray.h>
+#include <filesystem>
+#include <fstream>
 #include <string>
 #include <vector>
 
 #include "CLI/CLI.hpp"
+#include "cam.hpp"
+#include "coord.hpp"
 #include "nanovdb/NanoVDB.h"
 #include <CLI/CLI.hpp>
 #include <fmt/format.h>
+#include <nlohmann/json.hpp>
 #include <spdlog/spdlog.h>
+using json = nlohmann::json;
 
 #include "img.hpp"
 #include "vec.hpp"
@@ -49,12 +57,21 @@ auto main(int argc, char **argv) -> int {
 
   spdlog::info("Starting render with {}x{}x{}", width, height, samples);
 
+  std::filesystem::path scene_file = input;
+  std::ifstream jin(scene_file);
+  json data = json::parse(jin);
+  std::string env_map_file = scene_file.parent_path() / data["env_map"];
+
+  Sky sky = load_hdri(env_map_file);
+  float hfov = 60.0f * static_cast<float>(M_PI) / 180.0f;
+  Camera cam = Camera(vec3::ZERO, Quaternion(std::sqrt(2)*0.5, std::sqrt(2)*0.5, 0, 0), hfov,
+                      width, height);
+
   std::vector<Vec3> backing(width * height, vec3::ZERO);
   for (auto x = 0; x < width; x++) {
     for (auto y = 0; y < height; y++) {
-      backing[x + y * width] = Vec3((float)x / (float)(width - 1),
-                                    (float)y / (float)(height - 1), 0.0f) *
-                               10.0f;
+      RTCRayHit ray = cam.get_stratified_ray(x + y * width);
+      backing[x + y * width] = sky.ray_value(ray);
     }
   }
 
