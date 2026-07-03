@@ -59,7 +59,7 @@ target_include_directories(cloudy PRIVATE ${nanovdb_SOURCE_DIR}/nanovdb)
 find_package(OpenVDB CONFIG REQUIRED)
 target_link_libraries(cloudy PRIVATE OpenVDB::openvdb)
 
-find_path(TINYGLTF_INCLUDE_DIRS "tiny_gltf.h")
+find_path(TINYGLTF_INCLUDE_DIRS "tiny_gltf_v3.h")
 target_include_directories(cloudy PRIVATE ${TINYGLTF_INCLUDE_DIRS})
 
 find_package(Stb MODULE REQUIRED)
@@ -67,6 +67,9 @@ target_include_directories(cloudy SYSTEM PRIVATE ${Stb_INCLUDE_DIR})
 
 find_package(OpenEXR CONFIG REQUIRED)
 target_link_libraries(cloudy PRIVATE OpenEXR::OpenEXR)
+
+find_package(nlohmann_json CONFIG REQUIRED)
+target_link_libraries(cloudy PRIVATE nlohmann_json::nlohmann_json)
 
 find_package(CLI11 CONFIG REQUIRED)
 target_link_libraries(cloudy PRIVATE CLI11::CLI11)
