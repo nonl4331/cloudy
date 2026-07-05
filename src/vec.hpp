@@ -82,3 +82,74 @@ inline constexpr Vec3 X = Vec3(1.0f, 0.0f, 0.0f);
 inline constexpr Vec3 Y = Vec3(0.0f, 1.0f, 0.0f);
 inline constexpr Vec3 Z = Vec3(0.0f, 0.0f, 1.0f);
 } // namespace vec3
+
+struct Vec2 {
+  float x, y;
+
+  constexpr Vec2() : x(0.0f), y(0.0f) {}
+  constexpr Vec2(float x, float y) : x(x), y(y) {}
+
+  constexpr static auto splat(float v) -> Vec2 { return Vec2(v, v); }
+
+  constexpr auto operator==(const Vec2 &) const -> bool = default;
+
+  constexpr auto operator+(const Vec2 &o) const -> Vec2 {
+    return Vec2(x + o.x, y + o.y);
+  }
+  constexpr auto operator+=(const Vec2 &o) -> Vec2 & {
+    this->x += o.x;
+    this->y += o.y;
+    return *this;
+  }
+
+  constexpr auto operator-(const Vec2 &o) const -> Vec2 {
+    return Vec2(x - o.x, y - o.y);
+  }
+  constexpr auto operator-=(const Vec2 &o) -> Vec2 & {
+    this->x -= o.x;
+    this->y -= o.y;
+    return *this;
+  }
+
+  constexpr auto operator*(const float o) const -> Vec2 {
+    return Vec2(x * o, y * o);
+  }
+  constexpr auto operator*=(const float o) -> Vec2 & {
+    this->x *= o;
+    this->y *= o;
+    return *this;
+  }
+
+  constexpr auto operator/(const float o) const -> Vec2 {
+    const float rec = 1.0f / o;
+    return Vec2(x * rec, y * rec);
+  }
+  constexpr auto operator/=(const float o) -> Vec2 & {
+    this->x *= (1.0f / o);
+    this->y *= (1.0f / o);
+    return *this;
+  }
+
+  constexpr auto operator-() const -> Vec2 { return Vec2(-x, -y); }
+
+  constexpr auto dot(const Vec2 &o) const -> float { return x * o.x + y * o.y; }
+
+  constexpr auto mag_sq() const -> float { return this->dot(*this); }
+
+  auto mag() const -> float { return std::sqrt(this->mag_sq()); }
+
+  auto normalised() const -> Vec2 { return *this / this->mag(); }
+
+  auto normalise() -> void { *this = this->normalised(); }
+
+  constexpr auto hadamard(const Vec2 &o) const -> Vec2 {
+    return Vec2(x * o.x, y * o.y);
+  }
+};
+
+namespace vec2 {
+inline constexpr Vec2 ZERO = Vec2::splat(0.0f);
+inline constexpr Vec2 ONE = Vec2::splat(1.0f);
+inline constexpr Vec2 X = Vec2(1.0f, 0.0f);
+inline constexpr Vec2 Y = Vec2(0.0f, 1.0f);
+} // namespace vec2

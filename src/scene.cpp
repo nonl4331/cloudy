@@ -58,6 +58,7 @@ Scene::Scene(std::string const &file, uint32_t cam_idx, Camera cam) : cam(cam) {
   // shared index and vertex buffer between all geom
   std::vector<Vec3> vertex_buffer;
   std::vector<Vec3> normal_buffer;
+  std::vector<Vec2> uv_buffer;
   std::vector<uint32_t> index_buffer;
   // index into material buffer
   std::vector<uint32_t> materials;
@@ -197,6 +198,22 @@ Scene::Scene(std::string const &file, uint32_t cam_idx, Camera cam) : cam(cam) {
                     .normalised());
           }
 
+          // uvs
+          if (uv_idx == std::numeric_limits<uint32_t>().max()) {
+            spdlog::critical("Missing uv attribute in glb loading");
+          }
+          auto uv_acc = model.accessors[uv_idx];
+          auto uv_view = model.buffer_views[uv_acc.buffer_view];
+          auto uv_buf = model.buffers[uv_view.buffer];
+          auto uv_stride =
+              uv_view.byte_stride > 0 ? uv_view.byte_stride : 2 * sizeof(float);
+          for (uint32_t v = 0; v < uv_acc.count; v++) {
+            auto vec = reinterpret_cast<const float *>(
+                uv_buf.data.data + uv_acc.byte_offset + uv_view.byte_offset +
+                v * uv_stride);
+            uv_buffer.push_back(Vec2(vec[0], vec[1]));
+          }
+
           // indicies
           auto ind_acc = model.accessors[primitive.indices];
           auto ind_view = model.buffer_views[ind_acc.buffer_view];
@@ -242,10 +259,11 @@ Scene::Scene(std::string const &file, uint32_t cam_idx, Camera cam) : cam(cam) {
     }
   }
 
-  // TODO: load materials + actually use normals & uvs
+  // TODO: load materials
   this->cam = cam;
   this->vertex_buffer = std::move(vertex_buffer);
   this->normal_buffer = std::move(normal_buffer);
+  this->uv_buffer = std::move(uv_buffer);
   this->index_buffer = std::move(index_buffer);
   this->materials = std::move(materials);
 
@@ -260,6 +278,12 @@ Scene::Scene(std::string const &file, uint32_t cam_idx, Camera cam) : cam(cam) {
                                    sizeof(Vec3) * this->vertex_buffer.size());
   rtcSetGeometryBuffer(geom, RTC_BUFFER_TYPE_VERTEX, 0, RTC_FORMAT_FLOAT3,
                        vert_buf, 0, sizeof(Vec3), this->vertex_buffer.size());
+
+  RTCBuffer norm_buf =
+      rtcNewSharedBufferHostDevice(device, this->normal_buffer.data(),
+                                   sizeof(Vec3) * this->normal_buffer.size());
+  rtcSetGeometryBuffer(geom, RTC_BUFFER_TYPE_NORMAL, 0, RTC_FORMAT_FLOAT3,
+                       norm_buf, 0, sizeof(Vec3), this->normal_buffer.size());
 
   RTCBuffer ind_buf = rtcNewSharedBufferHostDevice(
       device, this->index_buffer.data(),

@@ -88,6 +88,15 @@ auto main(int argc, char **argv) -> int {
         backing[x + y * width] = sky.ray_value(ray);
       } else {
         backing[x + y * width] = vec3::ONE * std::powf(1.5f, -ray.ray.tfar);
+        backing[x + y * width] =
+            Vec3(ray.hit.Ng_x, ray.hit.Ng_y, ray.hit.Ng_z).normalised();
+        auto id = ray.hit.primID;
+        auto u = ray.hit.u;
+        auto v = ray.hit.v;
+        auto uv = scene.uv_buffer[scene.index_buffer[id * 3]] * (1.0f - u - v) +
+                  scene.uv_buffer[scene.index_buffer[id * 3 + 1]] * u +
+                  scene.uv_buffer[scene.index_buffer[id * 3 + 2]] * v;
+        backing[x + y * width] = Vec3(uv.x, uv.y, 0.0f).normalised();
       }
     }
   }
