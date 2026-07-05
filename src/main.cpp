@@ -1,6 +1,9 @@
 #include <cmath>
 #include <cstdint>
+#include <embree4/rtcore.h>
+#include <embree4/rtcore_common.h>
 #include <embree4/rtcore_ray.h>
+#include <embree4/rtcore_scene.h>
 #include <filesystem>
 #include <fstream>
 #include <string>
@@ -17,6 +20,7 @@
 using json = nlohmann::json;
 
 #include "img.hpp"
+#include "scene.hpp"
 #include "vec.hpp"
 
 auto main(int argc, char **argv) -> int {
@@ -57,21 +61,34 @@ auto main(int argc, char **argv) -> int {
 
   spdlog::info("Starting render with {}x{}x{}", width, height, samples);
 
-  std::filesystem::path scene_file = input;
-  std::ifstream jin(scene_file);
+  std::filesystem::path config_file = input;
+  std::ifstream jin(config_file);
   json data = json::parse(jin);
-  std::string env_map_file = scene_file.parent_path() / data["env_map"];
+  std::string env_map_file = config_file.parent_path() / data["env_map"];
+  std::string scene_file = config_file.parent_path() / data["scene"];
 
   Sky sky = load_hdri(env_map_file);
   float hfov = 60.0f * static_cast<float>(M_PI) / 180.0f;
-  Camera cam = Camera(vec3::ZERO, Quaternion(std::sqrt(2)*0.5, std::sqrt(2)*0.5, 0, 0), hfov,
-                      width, height);
+
+  Scene scene(scene_file, 0,
+              Camera(-vec3::Y,
+                     Quaternion(std::sqrt(2) * 0.5, std::sqrt(2) * 0.5, 0, 0),
+                     hfov, width, height));
+  RTCIntersectArguments args;
+  rtcInitIntersectArguments(&args);
+  args.flags = RTC_RAY_QUERY_FLAG_COHERENT;
 
   std::vector<Vec3> backing(width * height, vec3::ZERO);
   for (auto x = 0; x < width; x++) {
     for (auto y = 0; y < height; y++) {
-      RTCRayHit ray = cam.get_stratified_ray(x + y * width);
-      backing[x + y * width] = sky.ray_value(ray);
+      RTCRayHit ray = scene.cam.get_stratified_ray(x + y * width);
+
+      rtcIntersect1(scene.scene, &ray, &args);
+      if (ray.hit.geomID == RTC_INVALID_GEOMETRY_ID) {
+        backing[x + y * width] = sky.ray_value(ray);
+      } else {
+        backing[x + y * width] = vec3::ONE * std::powf(1.5f, -ray.ray.tfar);
+      }
     }
   }
 
