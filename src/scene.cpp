@@ -13,7 +13,34 @@
 #include <spdlog/spdlog.h>
 #include <vector>
 
-Scene::Scene(std::string const &file, uint32_t cam_idx, Camera cam) : cam(cam) {
+auto Scene::lo(RTCRayHit ray, RTCIntersectArguments *args) -> Vec3 {
+  auto out = vec3::ZERO;
+  rtcIntersect1(scene, &ray, args);
+  if (ray.hit.geomID == RTC_INVALID_GEOMETRY_ID) {
+    out = sky.ray_value(ray);
+  } else {
+    Vec3(ray.hit.Ng_x, ray.hit.Ng_y, ray.hit.Ng_z).normalised();
+    auto id = ray.hit.primID;
+    auto u = ray.hit.u;
+    auto v = ray.hit.v;
+    auto uv = uv_buffer[index_buffer[id * 3]] * (1.0f - u - v) +
+              uv_buffer[index_buffer[id * 3 + 1]] * u +
+              uv_buffer[index_buffer[id * 3 + 2]] * v;
+    out = Vec3(uv.x, uv.y, 0.0f).normalised();
+  }
+  return out;
+}
+
+Scene::Scene(Camera cam, Sky sky) : cam(cam), sky(sky) {
+  RTCDevice device = rtcNewDevice(nullptr);
+  RTCScene scene = rtcNewScene(device);
+  rtcCommitScene(scene);
+  this->device = device;
+  this->scene = scene;
+}
+
+Scene::Scene(std::string const &file, uint32_t cam_idx, Camera cam, Sky sky)
+    : cam(cam), sky(sky) {
   RTCDevice device = rtcNewDevice(nullptr);
   RTCScene scene = rtcNewScene(device);
 

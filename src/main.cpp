@@ -73,7 +73,8 @@ auto main(int argc, char **argv) -> int {
   Scene scene(scene_file, 0,
               Camera(-vec3::Y,
                      Quaternion(std::sqrt(2) * 0.5, std::sqrt(2) * 0.5, 0, 0),
-                     hfov, width, height));
+                     hfov, width, height), sky);
+
   RTCIntersectArguments args;
   rtcInitIntersectArguments(&args);
   args.flags = RTC_RAY_QUERY_FLAG_COHERENT;
@@ -82,22 +83,7 @@ auto main(int argc, char **argv) -> int {
   for (auto x = 0; x < width; x++) {
     for (auto y = 0; y < height; y++) {
       RTCRayHit ray = scene.cam.get_stratified_ray(x + y * width);
-
-      rtcIntersect1(scene.scene, &ray, &args);
-      if (ray.hit.geomID == RTC_INVALID_GEOMETRY_ID) {
-        backing[x + y * width] = sky.ray_value(ray);
-      } else {
-        backing[x + y * width] = vec3::ONE * std::powf(1.5f, -ray.ray.tfar);
-        backing[x + y * width] =
-            Vec3(ray.hit.Ng_x, ray.hit.Ng_y, ray.hit.Ng_z).normalised();
-        auto id = ray.hit.primID;
-        auto u = ray.hit.u;
-        auto v = ray.hit.v;
-        auto uv = scene.uv_buffer[scene.index_buffer[id * 3]] * (1.0f - u - v) +
-                  scene.uv_buffer[scene.index_buffer[id * 3 + 1]] * u +
-                  scene.uv_buffer[scene.index_buffer[id * 3 + 2]] * v;
-        backing[x + y * width] = Vec3(uv.x, uv.y, 0.0f).normalised();
-      }
+      backing[x + y * width] = scene.Li(ray, &args);
     }
   }
 
